@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#b8432f"/>
+  <!-- zwei Krüge, die anstoßen -->
+  <g transform="translate(256 290) scale(.84) translate(-256 -290) rotate(-12 200 300)">
+    <rect x="118" y="196" width="150" height="196" rx="22" fill="#fff4e3"/>
+    <path d="M118 236h-26a34 34 0 0 0-34 34v44a34 34 0 0 0 34 34h26" fill="none" stroke="#fff4e3" stroke-width="22"/>
+    <rect x="118" y="196" width="150" height="56" rx="22" fill="#f2c25a"/>
+    <circle cx="146" cy="186" r="26" fill="#fffaf1"/>
+    <circle cx="186" cy="178" r="30" fill="#fffaf1"/>
+    <circle cx="228" cy="184" r="27" fill="#fffaf1"/>
+    <circle cx="256" cy="198" r="18" fill="#fffaf1"/>
+  </g>
+  <g transform="translate(256 290) scale(.84) translate(-256 -290) rotate(12 312 300)">
+    <rect x="244" y="196" width="150" height="196" rx="22" fill="#fff4e3"/>
+    <path d="M394 236h26a34 34 0 0 1 34 34v44a34 34 0 0 1-34 34h-26" fill="none" stroke="#fff4e3" stroke-width="22"/>
+    <rect x="244" y="196" width="150" height="56" rx="22" fill="#f2c25a"/>
+    <circle cx="256" cy="198" r="18" fill="#fffaf1"/>
+    <circle cx="286" cy="184" r="27" fill="#fffaf1"/>
+    <circle cx="326" cy="178" r="30" fill="#fffaf1"/>
+    <circle cx="366" cy="186" r="26" fill="#fffaf1"/>
+  </g>
+  <!-- Funken -->
+  <g stroke="#f2c25a" stroke-width="14" stroke-linecap="round">
+    <path d="M256 92v42"/>
+    <path d="M196 108l18 32"/>
+    <path d="M316 108l-18 32"/>
+  </g>
+</svg>

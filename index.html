@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Busenfreunde</title>
+<meta name="theme-color" content="#b8432f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap">
+<style>
+/* Layout: Kopfbild mit Gruppenname, darunter zwei Reiter (Kalender / Ideen), schwebender Plus-Knopf, Details in Bottom-Sheets */
+:root {
+  --bg: #f6efe4; --card: #fffaf2; --fg: #2a1d15; --muted: #7a6656; --line: #e6d7c2;
+  --accent: #b8432f; --accent-fg: #fff7ee; --kochen: #c9822a; --aktiv: #3f6f8f;
+  --p1: #b8432f; --p2: #4b7a4f; --p3: #8a5aa8; --p4: #c9822a;
+  --shadow: 0 10px 30px rgba(60, 30, 10, .12);
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1511; --card: #261e18; --fg: #f3e7d6; --muted: #b19e8b; --line: #3a2e25;
+    --accent: #e0674f; --accent-fg: #1b1511; --kochen: #e3a24a; --aktiv: #7fb0d1;
+    --p1: #e0674f; --p2: #85bf88; --p3: #c39be0; --p4: #e3a24a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font: 16px/1.45 var(--body);
+  min-height: 100dvh; -webkit-tap-highlight-color: transparent;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Buttons & Felder */
+.btn { border: 0; border-radius: 12px; padding: 12px 18px; font-weight: 600; background: var(--accent); color: var(--accent-fg); min-height: 46px; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1.5px solid var(--line); }
+.btn.danger { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+.btn.small { padding: 8px 12px; min-height: 36px; font-size: .9rem; }
+.btn:disabled { opacity: .5; }
+label { display: grid; gap: 6px; font-size: .9rem; color: var(--muted); }
+input, textarea, select {
+  width: 100%; border: 1.5px solid var(--line); background: var(--card); border-radius: 12px;
+  padding: 12px; font-size: 16px; color: var(--fg);
+}
+textarea { resize: vertical; min-height: 84px; }
+.hint { font-size: .8rem; color: var(--muted); }
+.stack { display: grid; gap: 14px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row > * { flex: 1 1 140px; }
+
+/* Startseite ohne Login */
+.splash { min-height: 100dvh; display: grid; align-content: center; gap: 24px; padding-block: 32px; }
+.splash h1 { font-size: clamp(2.4rem, 11vw, 3.6rem); font-weight: 800; letter-spacing: -.02em; line-height: .95; }
+.splash h1 span { color: var(--accent); }
+.splash p { color: var(--muted); margin: 0; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; border-radius: 10px; padding: 10px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.linkbtn { background: none; border: 0; color: var(--accent); padding: 0; font-weight: 600; justify-self: start; }
+
+/* Kopf */
+.hero { position: relative; color: #fff; background: linear-gradient(135deg, #b8432f, #7a2b1f 55%, #3d2a1c); overflow: hidden; }
+.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(20, 10, 5, .7), rgba(20, 10, 5, 0) 60%); }
+.hero-inner { position: relative; z-index: 1; min-height: 190px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: calc(env(safe-area-inset-top, 0px) + 16px); padding-bottom: 16px; }
+.hero h1 { font-size: clamp(1.8rem, 8vw, 2.4rem); font-weight: 800; line-height: 1; text-shadow: 0 2px 12px rgba(0, 0, 0, .35); }
+.hero .members { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.hero-actions { display: flex; gap: 8px; }
+.iconbtn { width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .2); color: #fff; display: grid; place-items: center; backdrop-filter: blur(6px); }
+.iconbtn svg { width: 22px; height: 22px; }
+
+/* Personen-Badges */
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; padding: 3px 9px 3px 3px; border-radius: 999px; background: var(--card); color: var(--fg); border: 1px solid var(--line); }
+.badge i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .7rem; color: #fff; }
+.hero .badge { background: rgba(255, 255, 255, .92); color: #2a1d15; border: 0; }
+
+/* Reiter */
+.tabs { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+.tabs .wrap { display: flex; gap: 4px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 14px 8px 12px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: var(--muted); border-bottom: 3px solid transparent; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+main { padding-block: 16px 110px; }
+
+/* Kalender */
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-head h2 { font-size: 1.25rem; font-weight: 700; }
+.cal-nav { display: flex; gap: 6px; }
+.cal-nav button { width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); font-size: 1.1rem; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.dow { text-align: center; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-bottom: 4px; }
+.day { aspect-ratio: 1 / 1.05; max-width: 100%; border: 0; border-radius: 10px; background: var(--card); display: grid; grid-template-rows: 1fr auto; justify-items: center; padding: 6px 2px 5px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.day.out { opacity: .35; }
+.day.today { box-shadow: inset 0 0 0 2px var(--accent); }
+.day.sel { background: var(--accent); color: var(--accent-fg); }
+.dots { display: flex; gap: 3px; min-height: 6px; }
+.dots b { width: 6px; height: 6px; border-radius: 50%; }
+.dot-aktivitaet { background: var(--aktiv); }
+.dot-kochen { background: var(--kochen); }
+.day.sel .dots b { background: var(--accent-fg); }
+.legend { display: flex; gap: 14px; font-size: .78rem; color: var(--muted); margin-top: 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend b { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 22px 0 10px; }
+.section-title h3 { font-size: 1.05rem; font-weight: 700; }
+
+/* Einträge */
+.list { display: grid; gap: 10px; }
+.item { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 12px; }
+.when { width: 50px; text-align: center; border-radius: 10px; padding: 6px 0; background: var(--bg); font-variant-numeric: tabular-nums; }
+.when b { display: block; font-family: var(--display); font-size: 1.3rem; line-height: 1; }
+.when small { font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.typ { width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem; }
+.typ-aktivitaet { background: color-mix(in srgb, var(--aktiv) 18%, transparent); }
+.typ-kochen { background: color-mix(in srgb, var(--kochen) 20%, transparent); }
+.item-main { min-width: 0; }
+.item-title { font-weight: 700; overflow-wrap: anywhere; }
+.item-meta { font-size: .82rem; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.pill { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.pill-aktivitaet { color: var(--aktiv); background: color-mix(in srgb, var(--aktiv) 14%, transparent); }
+.pill-kochen { color: var(--kochen); background: color-mix(in srgb, var(--kochen) 16%, transparent); }
+.count { font-size: .8rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.empty { border: 1.5px dashed var(--line); border-radius: 14px; padding: 18px; color: var(--muted); text-align: center; display: grid; gap: 10px; justify-items: center; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: .9rem; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+/* Plus-Knopf */
+.fab { position: fixed; right: max(18px, calc(env(safe-area-inset-right, 0px) + 18px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); width: 62px; height: 62px; border-radius: 20px; border: 0; background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow); font-size: 2rem; line-height: 1; z-index: 6; }
+
+/* Bottom-Sheets */
+.scrim { position: fixed; inset: 0; background: rgba(20, 10, 5, .45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 92dvh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 10px max(18px, env(safe-area-inset-left, 0px)) calc(env(safe-area-inset-bottom, 0px) + 22px); box-shadow: var(--shadow); animation: up .22s ease-out; }
+@keyframes up { from { transform: translateY(40px); opacity: .6; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+.grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 14px; }
+.sheet h2 { font-size: 1.45rem; font-weight: 800; overflow-wrap: anywhere; }
+.sheet-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.close { border: 0; background: var(--card); border-radius: 50%; width: 36px; height: 36px; flex: none; font-size: 1.2rem; }
+.desc { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.facts { display: grid; gap: 6px; margin-bottom: 14px; }
+.facts div { display: flex; gap: 10px; align-items: baseline; }
+.facts dt { width: 52px; flex: none; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+.comments { display: grid; gap: 10px; margin-top: 8px; }
+.comment { display: grid; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.comment-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); }
+.comment p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.comment .del { border: 0; background: none; color: var(--muted); font-size: 1rem; padding: 0 4px; }
+.comment-form { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
+.comment-form textarea { min-height: 46px; flex: 1; }
+
+.typepick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.typepick button { border: 1.5px solid var(--line); background: var(--card); border-radius: 12px; padding: 12px; font-weight: 700; }
+.typepick button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+.code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.6rem; letter-spacing: .12em; font-weight: 700; background: var(--card); border: 1.5px dashed var(--line); border-radius: 12px; padding: 12px; text-align: center; user-select: all; }
+.confirm { display: grid; gap: 10px; background: var(--card); border: 1.5px solid var(--accent); border-radius: 12px; padding: 12px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 600; z-index: 40; max-width: calc(100% - 32px); box-shadow: var(--shadow); }
+.loading { min-height: 60dvh; display: grid; place-items: center; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div id="app"><div class="loading">Lädt …</div></div>
+<div id="toast" class="toast" hidden></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+
+const SUPABASE_URL = 'https://qanbxxbbngctucjbzfeb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mQWyeC7aCRJn29MuHTGG1Q_9ArG0_1J';
+const BUCKET = 'busenfreunde';
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'bf-auth' } });
+
+const app = document.getElementById('app');
+const TYP = {
+  aktivitaet: { label: 'Aktivität', emoji: '🎳' },
+  kochen: { label: 'Kochen', emoji: '🍳' },
+};
+const PERSON_VARS = ['--p1', '--p2', '--p3', '--p4'];
+const WOCHENTAGE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+const state = {
+  user: null,
+  gruppe: null,
+  gruppen: [],
+  mitglieder: new Map(),
+  eintraege: [],
+  tab: 'kalender',
+  monat: startOfMonth(new Date()),
+  selected: null,
+  ideenFilter: 'alle',
+  headerUrl: null,
+  authMode: 'login',
+  recovery: false,
+};
+
+/* ---------- Hilfsfunktionen ---------- */
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function parseYmd(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function todayYmd() { return ymd(new Date()); }
+function fmtDateLong(s) { return parseYmd(s).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }); }
+function fmtTime(t) { return t ? t.slice(0, 5) + ' Uhr' : ''; }
+function fmtAgo(iso) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return 'gerade eben';
+  if (diff < 3600) return `vor ${Math.floor(diff / 60)} Min.`;
+  if (diff < 86400) return `vor ${Math.floor(diff / 3600)} Std.`;
+  return new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+}
+function person(id) {
+  return state.mitglieder.get(id) || { name: 'Ehemalig', color: 'var(--muted)' };
+}
+function badge(id) {
+  const p = person(id);
+  return `<span class="badge"><i style="background:${p.color}">${esc(p.name.slice(0, 1).toUpperCase())}</i>${esc(p.name)}</span>`;
+}
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
+}
+function fehler(e) {
+  console.error(e);
+  const m = e?.message || String(e);
+  if (/Invalid login/i.test(m)) return toast('E-Mail oder Passwort stimmt nicht.');
+  if (/Email not confirmed/i.test(m)) return toast('Bitte bestätige zuerst deine E-Mail.');
+  if (/already registered/i.test(m)) return toast('Diese E-Mail hat schon ein Konto. Bitte anmelden.');
+  toast(m);
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* egal */ } }
+
+/* ---------- Daten ---------- */
+async function ladeGruppen() {
+  const { data, error } = await sb.from('bf_mitglieder')
+    .select('gruppe_id, bf_gruppen(id, name, join_code, header_path)')
+    .eq('user_id', state.user.id);
+  if (error) throw error;
+  state.gruppen = (data || []).map(r => r.bf_gruppen).filter(Boolean);
+  const gemerkt = lsGet('bf-gruppe');
+  state.gruppe = state.gruppen.find(g => g.id === gemerkt) || state.gruppen[0] || null;
+}
+async function ladeMitglieder() {
+  const { data, error } = await sb.rpc('bf_gruppen_mitglieder', { target_gruppe_id: state.gruppe.id });
+  if (error) throw error;
+  state.mitglieder = new Map((data || []).map((m, i) => [m.user_id, {
+    name: m.display_name || 'Unbekannt',
+    color: `var(${PERSON_VARS[i % PERSON_VARS.length]})`,
+  }]));
+}
+async function ladeEintraege() {
+  const { data, error } = await sb.from('bf_eintraege')
+    .select('*, bf_kommentare(count)')
+    .eq('gruppe_id', state.gruppe.id)
+    .order('datum', { ascending: true, nullsFirst: false })
+    .order('uhrzeit', { ascending: true, nullsFirst: true })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  state.eintraege = (data || []).map(e => ({ ...e, kommentare: e.bf_kommentare?.[0]?.count ?? 0 }));
+}
+async function ladeHeader() {
+  state.headerUrl = null;
+  if (!state.gruppe?.header_path) return;
+  const { data } = await sb.storage.from(BUCKET).createSignedUrl(state.gruppe.header_path, 60 * 60 * 6);
+  state.headerUrl = data?.signedUrl || null;
+}
+async function profilNameSetzen() {
+  // Beim ersten Login den bei der Registrierung angegebenen Namen ins (mit Nest geteilte) Profil schreiben,
+  // aber nie einen vorhandenen Namen überschreiben.
+  const wunsch = state.user.user_metadata?.display_name;
+  if (!wunsch) return;
+  const { data } = await sb.from('profiles').select('display_name').eq('id', state.user.id).maybeSingle();
+  if (data?.display_name) return;
+  if (data) await sb.from('profiles').update({ display_name: wunsch }).eq('id', state.user.id);
+  else await sb.from('profiles').insert({ id: state.user.id, display_name: wunsch });
+}
+
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  state.user = session?.user || null;
+  await route();
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') { state.recovery = true; state.user = session?.user || null; return renderRecovery(); }
+    if (event === 'SIGNED_IN' && !state.user) { state.user = session.user; await route(); }
+    if (event === 'SIGNED_OUT') { state.user = null; state.gruppe = null; await route(); }
+  });
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && state.gruppe && !document.querySelector('.scrim')) {
+      try { await ladeEintraege(); renderMain(); } catch (e) { console.error(e); }
+    }
+  });
+}
+
+async function route() {
+  if (state.recovery) return renderRecovery();
+  if (!state.user) return renderAuth();
+  try {
+    await profilNameSetzen().catch(console.error);
+    await ladeGruppen();
+    if (!state.gruppe) return renderOnboarding();
+    await Promise.all([ladeMitglieder(), ladeEintraege(), ladeHeader()]);
+    renderShell();
+  } catch (e) {
+    fehler(e);
+    app.innerHTML = `<div class="wrap loading"><div class="stack" style="text-align:center">
+      <p>Die Daten konnten nicht geladen werden.</p>
+      <button class="btn" id="retry">Nochmal versuchen</button>
+      <button class="linkbtn" id="logout2" style="justify-self:center">Abmelden</button></div></div>`;
+    document.getElementById('retry').onclick = route;
+    document.getElementById('logout2').onclick = () => sb.auth.signOut();
+  }
+}
+
+/* ---------- Login ---------- */
+function renderAuth() {
+  const reg = state.authMode === 'register';
+  const reset = state.authMode === 'reset';
+  app.innerHTML = `
+  <div class="wrap splash">
+    <div class="stack">
+      <h1>Busen&shy;freunde<span>.</span></h1>
+      <p>Ausflüge, Kochabende und alles, was ihr zwei sonst noch vorhabt. Gemeinsam geplant, in einem Kalender.</p>
+    </div>
+    ${reset ? '' : `<div class="seg" role="group" aria-label="Anmelden oder registrieren">
+      <button type="button" id="m-login" aria-pressed="${!reg}">Anmelden</button>
+      <button type="button" id="m-reg" aria-pressed="${reg}">Registrieren</button>
+    </div>`}
+    <form id="authform" class="stack" novalidate>
+      ${reg ? `<label>Dein Name<input id="f-name" autocomplete="nickname" required maxlength="60" placeholder="z. B. Jan"></label>` : ''}
+      <label>E-Mail<input id="f-mail" type="email" autocomplete="email" required></label>
+      ${reset ? '' : `<label>Passwort<input id="f-pass" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required minlength="6"></label>`}
+      <button class="btn" type="submit">${reset ? 'Link zum Zurücksetzen schicken' : reg ? 'Konto anlegen' : 'Anmelden'}</button>
+      ${reg ? '<p class="hint">Hast du schon ein Konto für Nest? Dann melde dich einfach damit an.</p>' : ''}
+      <button class="linkbtn" type="button" id="m-reset">${reset ? 'Zurück zur Anmeldung' : 'Passwort vergessen?'}</button>
+    </form>
+  </div>`;
+  const setMode = m => { state.authMode = m; renderAuth(); };
+  document.getElementById('m-login')?.addEventListener('click', () => setMode('login'));
+  document.getElementById('m-reg')?.addEventListener('click', () => setMode('register'));
+  document.getElementById('m-reset').addEventListener('click', () => setMode(reset ? 'login' : 'reset'));
+  document.getElementById('authform').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const btn = ev.target.querySelector('button[type=submit]');
+    const mail = document.getElementById('f-mail').value.trim();
+    const pass = document.getElementById('f-pass')?.value || '';
+    const redirect = location.origin + location.pathname;
+    if (!mail) return toast('Bitte gib deine E-Mail ein.');
+    btn.disabled = true;
+    try {
+      if (reset) {
+        const { error } = await sb.auth.resetPasswordForEmail(mail, { redirectTo: redirect });
+        if (error) throw error;
+        toast('Falls es ein Konto gibt, ist der Link unterwegs.');
+        state.authMode = 'login'; return renderAuth();
+      }
+      if (pass.length < 6) { toast('Das Passwort braucht mindestens 6 Zeichen.'); return; }
+      if (reg) {
+        const name = document.getElementById('f-name').value.trim();
+        if (!name) { toast('Bitte gib deinen Namen ein.'); return; }
+        const { data, error } = await sb.auth.signUp({ email: mail, password: pass, options: { data: { display_name: name }, emailRedirectTo: redirect } });
+        if (error) throw error;
+        if (!data.session) {
+          app.innerHTML = `<div class="wrap splash"><div class="stack"><h1>Fast geschafft<span>.</span></h1>
+            <p>Wir haben dir eine E-Mail an <b>${esc(mail)}</b> geschickt. Bestätige sie und melde dich danach hier an.</p>
+            <button class="btn" id="back">Zur Anmeldung</button></div></div>`;
+          document.getElementById('back').onclick = () => setMode('login');
+        }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email: mail, password: pass });
+        if (error) throw error;
+      }
+    } catch (e) { fehler(e); } finally { btn.disabled = false; }
+  });
+}
+
+function renderRecovery() {
+  app.innerHTML = `<div class="wrap splash"><form id="rec" class="stack">
+    <h1>Neues Passwort<span>.</span></h1>
+    <label>Neues Passwort<input id="f-new" type="password" autocomplete="new-password" minlength="6" required></label>
+    <button class="btn" type="submit">Speichern</button></form></div>`;
+  document.getElementById('rec').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const pw = document.getElementById('f-new').value;
+    if (pw.length < 6) return toast('Das Passwort braucht mindestens 6 Zeichen.');
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) return fehler(error);
+    toast('Passwort geändert.');
+    state.recovery = false;
+    history.replaceState(null, '', location.pathname);
+    route();
+  });
+}
+
+/* ---------- Gruppe gründen / beitreten ---------- */
+function renderOnboarding() {
+  app.innerHTML = `
+  <div class="wrap splash">
+    <div class="stack">
+      <h1>Wer gehört<br>dazu<span>?</span></h1>
+      <p>Einer von euch gründet die Gruppe und schickt dem anderen den Code.</p>
+    </div>
+    <form id="beitreten" class="stack">
+      <label>Code von deinem Kumpel<input id="f-code" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="z. B. 7F3A9C1B"></label>
+      <button class="btn" type="submit">Beitreten</button>
+    </form>
+    <div class="hint" style="text-align:center">oder</div>
+    <form id="gruenden" class="stack">
+      <label>Name der Gruppe<input id="f-gname" maxlength="60" value="Busenfreunde"></label>
+      <button class="btn ghost" type="submit">Neue Gruppe gründen</button>
+    </form>
+    <button class="linkbtn" id="logout" style="justify-self:center">Abmelden</button>
+  </div>`;
+  document.getElementById('beitreten').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const code = document.getElementById('f-code').value.trim();
+    if (!code) return toast('Bitte gib den Code ein.');
+    const { data, error } = await sb.rpc('bf_join_by_code', { code });
+    if (error) return fehler(error);
+    lsSet('bf-gruppe', data); toast('Willkommen in der Gruppe!'); route();
+  });
+  document.getElementById('gruenden').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const name = document.getElementById('f-gname').value.trim() || 'Busenfreunde';
+    const { data, error } = await sb.rpc('bf_create_gruppe', { gruppen_name: name });
+    if (error) return fehler(error);
+    lsSet('bf-gruppe', data?.[0]?.id); route();
+  });
+  document.getElementById('logout').onclick = () => sb.auth.signOut();
+}
+
+/* ---------- Hauptansicht ---------- */
+const ICON_CAMERA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+
+function renderShell() {
+  app.innerHTML = `
+  <header class="hero" id="hero"></header>
+  <nav class="tabs" role="tablist">
+    <div class="wrap">
+      <button role="tab" id="t-kalender">Kalender</button>
+      <button role="tab" id="t-ideen">Ideen</button>
+    </div>
+  </nav>
+  <main class="wrap" id="main"></main>
+  <button class="fab" id="fab" aria-label="Neuer Eintrag">+</button>
+  <input type="file" id="headerfile" accept="image/*" hidden>`;
+  document.getElementById('t-kalender').onclick = () => { state.tab = 'kalender'; renderMain(); };
+  document.getElementById('t-ideen').onclick = () => { state.tab = 'ideen'; renderMain(); };
+  document.getElementById('fab').onclick = () => openForm(state.tab === 'kalender' ? { datum: state.selected || '' } : { datum: '' });
+  document.getElementById('headerfile').addEventListener('change', uploadHeader);
+  renderHero();
+  renderMain();
+}
+
+function renderHero() {
+  const hero = document.getElementById('hero');
+  const members = [...state.mitglieder.keys()].map(badge).join('');
+  hero.innerHTML = `
+    ${state.headerUrl ? `<img src="${esc(state.headerUrl)}" alt="">` : ''}
+    <div class="wrap hero-inner">
+      <div style="min-width:0">
+        <h1>${esc(state.gruppe.name)}</h1>
+        <div class="members">${members}</div>
+      </div>
+      <div class="hero-actions">
+        <button class="iconbtn" id="h-photo" aria-label="Titelbild ändern">${ICON_CAMERA}</button>
+        <button class="iconbtn" id="h-settings" aria-label="Einstellungen">${ICON_GEAR}</button>
+      </div>
+    </div>`;
+  document.getElementById('h-photo').onclick = () => document.getElementById('headerfile').click();
+  document.getElementById('h-settings').onclick = openSettings;
+}
+
+function renderMain() {
+  document.getElementById('t-kalender').setAttribute('aria-selected', state.tab === 'kalender');
+  document.getElementById('t-ideen').setAttribute('aria-selected', state.tab === 'ideen');
+  const main = document.getElementById('main');
+  main.innerHTML = state.tab === 'kalender' ? kalenderHtml() : ideenHtml();
+  main.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openDetail(b.dataset.open));
+  if (state.tab === 'kalender') {
+    main.querySelectorAll('[data-day]').forEach(b => b.onclick = () => {
+      state.selected = state.selected === b.dataset.day ? null : b.dataset.day;
+      if (state.selected) { const d = parseYmd(state.selected); if (d.getMonth() !== state.monat.getMonth()) state.monat = startOfMonth(d); }
+      renderMain();
+    });
+    document.getElementById('prev').onclick = () => { state.monat = new Date(state.monat.getFullYear(), state.monat.getMonth() - 1, 1); renderMain(); };
+    document.getElementById('next').onclick = () => { state.monat = new Date(state.monat.getFullYear(), state.monat.getMonth() + 1, 1); renderMain(); };
+    document.getElementById('todaybtn')?.addEventListener('click', () => { state.monat = startOfMonth(new Date()); state.selected = null; renderMain(); });
+    document.getElementById('addday')?.addEventListener('click', () => openForm({ datum: state.selected }));
+  } else {
+    main.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { state.ideenFilter = b.dataset.filter; renderMain(); });
+    main.querySelectorAll('[data-plan]').forEach(b => b.onclick = ev => { ev.stopPropagation(); openForm(state.eintraege.find(e => e.id === b.dataset.plan), { fokusDatum: true }); });
+    document.getElementById('addidea')?.addEventListener('click', () => openForm({ datum: '' }));
+  }
+}
+
+function itemHtml(e, opts = {}) {
+  const t = TYP[e.typ];
+  const left = e.datum && opts.mitDatum !== false
+    ? (() => { const d = parseYmd(e.datum); return `<div class="when"><b>${d.getDate()}</b><small>${d.toLocaleDateString('de-DE', { month: 'short' }).replace('.', '')}</small></div>`; })()
+    : `<div class="typ typ-${e.typ}" aria-hidden="true">${t.emoji}</div>`;
+  const meta = [];
+  meta.push(`<span class="pill pill-${e.typ}">${t.label}</span>`);
+  if (e.datum && opts.mitDatum !== false) meta.push(esc(parseYmd(e.datum).toLocaleDateString('de-DE', { weekday: 'short' })) + (e.uhrzeit ? ', ' + fmtTime(e.uhrzeit) : ''));
+  else if (e.uhrzeit) meta.push(fmtTime(e.uhrzeit));
+  if (e.ort) meta.push('📍 ' + esc(e.ort));
+  const right = opts.planen
+    ? `<button class="btn small" data-plan="${e.id}">Einplanen</button>`
+    : (e.kommentare ? `<span class="count" aria-label="${e.kommentare} Kommentare">💬 ${e.kommentare}</span>` : '<span></span>');
+  return `<div class="item" role="button" tabindex="0" data-open="${e.id}">
+    ${left}
+    <div class="item-main"><div class="item-title">${esc(e.titel)}</div><div class="item-meta">${meta.map(m => m.startsWith('<span') ? m : `<span>${m}</span>`).join('')}</div></div>
+    ${right}
+  </div>`;
+}
+
+function kalenderHtml() {
+  const m = state.monat;
+  const first = new Date(m.getFullYear(), m.getMonth(), 1);
+  const offset = (first.getDay() + 6) % 7;
+  const gridStart = new Date(m.getFullYear(), m.getMonth(), 1 - offset);
+  const daysInMonth = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+  const cells = Math.ceil((offset + daysInMonth) / 7) * 7;
+  const proTag = new Map();
+  for (const e of state.eintraege) if (e.datum) { if (!proTag.has(e.datum)) proTag.set(e.datum, []); proTag.get(e.datum).push(e); }
+  const heute = todayYmd();
+  let grid = WOCHENTAGE.map(w => `<div class="dow">${w}</div>`).join('');
+  for (let i = 0; i < cells; i++) {
+    const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+    const key = ymd(d);
+    const list = proTag.get(key) || [];
+    const cls = ['day'];
+    if (d.getMonth() !== m.getMonth()) cls.push('out');
+    if (key === heute) cls.push('today');
+    if (key === state.selected) cls.push('sel');
+    const dots = list.slice(0, 3).map(e => `<b class="dot-${e.typ}"></b>`).join('');
+    const label = `${d.getDate()}. ${d.toLocaleDateString('de-DE', { month: 'long' })}${list.length ? `, ${list.length} Termin${list.length > 1 ? 'e' : ''}` : ''}`;
+    grid += `<button class="${cls.join(' ')}" data-day="${key}" aria-label="${esc(label)}">${d.getDate()}<span class="dots">${dots}</span></button>`;
+  }
+  const monatName = m.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  const imAktuellenMonat = m.getFullYear() === new Date().getFullYear() && m.getMonth() === new Date().getMonth();
+
+  let unten;
+  if (state.selected) {
+    const list = proTag.get(state.selected) || [];
+    unten = `<div class="section-title"><h3>${esc(fmtDateLong(state.selected))}</h3></div>
+      <div class="list">${list.length ? list.map(e => itemHtml(e, { mitDatum: false })).join('') : '<div class="empty">Noch nichts geplant.</div>'}</div>
+      <div style="margin-top:12px"><button class="btn ghost" id="addday" style="width:100%">+ Etwas an diesem Tag planen</button></div>`;
+  } else {
+    const kommend = state.eintraege.filter(e => e.datum && e.datum >= heute).slice(0, 30);
+    const ideen = state.eintraege.filter(e => !e.datum).length;
+    unten = `<div class="section-title"><h3>Demnächst</h3></div>
+      <div class="list">${kommend.length ? kommend.map(e => itemHtml(e)).join('') : `<div class="empty">Noch nichts im Kalender.${ideen ? `<span>${ideen} Idee${ideen > 1 ? 'n warten' : ' wartet'} im Reiter „Ideen“ aufs Einplanen.</span>` : '<span>Tipp auf einen Tag oder auf das Plus.</span>'}</div>`}</div>`;
+  }
+  return `
+    <div class="cal-head">
+      <h2>${esc(monatName)}</h2>
+      <div class="cal-nav">
+        ${imAktuellenMonat ? '' : '<button class="btn ghost small" id="todaybtn" style="width:auto">Heute</button>'}
+        <button id="prev" aria-label="Voriger Monat">‹</button>
+        <button id="next" aria-label="Nächster Monat">›</button>
+      </div>
+    </div>
+    <div class="grid">${grid}</div>
+    <div class="legend"><span><b class="dot-aktivitaet"></b>Aktivität</span><span><b class="dot-kochen"></b>Kochen</span></div>
+    ${unten}`;
+}
+
+function ideenHtml() {
+  const f = state.ideenFilter;
+  const ideen = state.eintraege.filter(e => !e.datum && (f === 'alle' || e.typ === f));
+  const chip = (k, l) => `<button class="chip" data-filter="${k}" aria-pressed="${f === k}">${l}</button>`;
+  return `
+    <div class="filters">${chip('alle', 'Alle')}${chip('aktivitaet', '🎳 Aktivität')}${chip('kochen', '🍳 Kochen')}</div>
+    <div class="list">${ideen.length ? ideen.map(e => itemHtml(e, { planen: true })).join('')
+      : `<div class="empty">Hier sammelt ihr alles für „irgendwann mal“. Ohne Datum, ohne Druck.<button class="btn small" id="addidea">Erste Idee notieren</button></div>`}</div>`;
+}
+
+/* ---------- Sheets ---------- */
+function openSheet(html, onMount) {
+  closeSheet();
+  const scrim = document.createElement('div');
+  scrim.className = 'scrim';
+  scrim.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;
+  scrim.addEventListener('click', ev => { if (ev.target === scrim) closeSheet(); });
+  document.body.appendChild(scrim);
+  document.body.style.overflow = 'hidden';
+  scrim.querySelectorAll('[data-close]').forEach(b => b.onclick = closeSheet);
+  onMount?.(scrim);
+}
+function closeSheet() {
+  const offen = document.querySelector('.scrim');
+  if (!offen) return;
+  offen.remove();
+  document.body.style.overflow = '';
+  if (document.getElementById('main')) renderMain();  // z. B. Kommentar-Zähler aktualisieren
+}
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') closeSheet();
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches?.('.item[data-open]')) { ev.preventDefault(); ev.target.click(); }
+});
+
+function openForm(e = {}, opts = {}) {
+  const neu = !e.id;
+  let typ = e.typ || 'aktivitaet';
+  openSheet(`
+    <div class="sheet-head"><h2>${neu ? 'Neuer Eintrag' : opts.fokusDatum ? 'Einplanen' : 'Bearbeiten'}</h2><button class="close" data-close aria-label="Schließen">✕</button></div>
+    <form id="eform" class="stack" novalidate>
+      <div class="typepick" role="group" aria-label="Art">
+        <button type="button" data-typ="aktivitaet">🎳 Aktivität</button>
+        <button type="button" data-typ="kochen">🍳 Kochen</button>
+      </div>
+      <label>Was?<input id="e-titel" maxlength="120" required value="${esc(e.titel || '')}" placeholder="z. B. Rheinischer Sauerbraten"></label>
+      <div class="row">
+        <label>Datum<input id="e-datum" type="date" value="${esc(e.datum || '')}"></label>
+        <label>Uhrzeit<input id="e-zeit" type="time" value="${esc(e.uhrzeit ? e.uhrzeit.slice(0, 5) : '')}"></label>
+      </div>
+      <p class="hint" style="margin:-6px 0 0">Ohne Datum landet es bei den Ideen.</p>
+      <label>Wo?<input id="e-ort" maxlength="200" value="${esc(e.ort || '')}" placeholder="optional"></label>
+      <label>Notizen<textarea id="e-desc" maxlength="4000" placeholder="Wer bringt was mit, Rezept-Link, …">${esc(e.beschreibung || '')}</textarea></label>
+      <button class="btn" type="submit">${neu ? 'Speichern' : 'Änderungen speichern'}</button>
+    </form>`, scrim => {
+    const setTyp = t => { typ = t; scrim.querySelectorAll('[data-typ]').forEach(b => b.setAttribute('aria-pressed', b.dataset.typ === t)); };
+    setTyp(typ);
+    scrim.querySelectorAll('[data-typ]').forEach(b => b.onclick = () => setTyp(b.dataset.typ));
+    const focusEl = opts.fokusDatum ? scrim.querySelector('#e-datum') : scrim.querySelector('#e-titel');
+    setTimeout(() => { focusEl.focus(); if (opts.fokusDatum) focusEl.showPicker?.(); }, 60);
+    scrim.querySelector('#eform').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const titel = scrim.querySelector('#e-titel').value.trim();
+      if (!titel) return toast('Bitte gib ein, was ihr vorhabt.');
+      const datum = scrim.querySelector('#e-datum').value || null;
+      if (opts.fokusDatum && !datum) return toast('Bitte wähle ein Datum.');
+      const row = {
+        typ, titel,
+        datum,
+        uhrzeit: scrim.querySelector('#e-zeit').value || null,
+        ort: scrim.querySelector('#e-ort').value.trim() || null,
+        beschreibung: scrim.querySelector('#e-desc').value.trim() || null,
+      };
+      const btn = ev.target.querySelector('button[type=submit]');
+      btn.disabled = true;
+      const res = neu
+        ? await sb.from('bf_eintraege').insert({ ...row, gruppe_id: state.gruppe.id, created_by: state.user.id })
+        : await sb.from('bf_eintraege').update(row).eq('id', e.id);
+      btn.disabled = false;
+      if (res.error) return fehler(res.error);
+      closeSheet();
+      if (datum) { state.selected = null; state.monat = startOfMonth(parseYmd(datum)); state.tab = 'kalender'; }
+      toast(neu ? (datum ? 'Eingetragen.' : 'Idee gemerkt.') : (opts.fokusDatum ? 'Eingeplant.' : 'Gespeichert.'));
+      await ladeEintraege(); renderMain();
+    });
+  });
+}
+
+async function openDetail(id) {
+  const e = state.eintraege.find(x => x.id === id);
+  if (!e) return;
+  const t = TYP[e.typ];
+  const facts = [];
+  if (e.datum) facts.push(['Wann', esc(fmtDateLong(e.datum)) + (e.uhrzeit ? ', ' + fmtTime(e.uhrzeit) : '')]);
+  else facts.push(['Wann', 'Noch offen (Idee)']);
+  if (e.ort) facts.push(['Wo', esc(e.ort)]);
+  facts.push(['Von', badge(e.created_by)]);
+  openSheet(`
+    <div class="sheet-head"><div class="stack" style="gap:6px;min-width:0"><span class="pill pill-${e.typ}" style="justify-self:start">${t.emoji} ${t.label}</span><h2>${esc(e.titel)}</h2></div><button class="close" data-close aria-label="Schließen">✕</button></div>
+    <dl class="facts">${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    ${e.beschreibung ? `<div class="desc">${esc(e.beschreibung)}</div>` : ''}
+    <div class="row" style="margin-top:14px">
+      ${e.datum ? '' : '<button class="btn" id="d-plan">Einplanen</button>'}
+      <button class="btn ghost" id="d-edit">Bearbeiten</button>
+      <button class="btn danger" id="d-del">Löschen</button>
+    </div>
+    <div id="d-confirm"></div>
+    <div class="section-title"><h3>Kommentare</h3></div>
+    <div class="comments" id="d-comments"><div class="hint">Lädt …</div></div>
+    <form class="comment-form" id="d-cform">
+      <textarea id="d-ctext" maxlength="2000" rows="1" placeholder="Was meinst du?" aria-label="Kommentar"></textarea>
+      <button class="btn" type="submit">Senden</button>
+    </form>`, async scrim => {
+    scrim.querySelector('#d-plan')?.addEventListener('click', () => openForm(e, { fokusDatum: true }));
+    scrim.querySelector('#d-edit').onclick = () => openForm(e);
+    scrim.querySelector('#d-del').onclick = () => {
+      scrim.querySelector('#d-confirm').innerHTML = `<div class="confirm" style="margin-top:12px">
+        <span>„${esc(e.titel)}“ samt Kommentaren löschen?</span>
+        <div class="row"><button class="btn danger" id="d-yes">Ja, löschen</button><button class="btn ghost" id="d-no">Behalten</button></div></div>`;
+      scrim.querySelector('#d-no').onclick = () => { scrim.querySelector('#d-confirm').innerHTML = ''; };
+      scrim.querySelector('#d-yes').onclick = async () => {
+        const { error } = await sb.from('bf_eintraege').delete().eq('id', e.id);
+        if (error) return fehler(error);
+        closeSheet(); toast('Gelöscht.'); await ladeEintraege(); renderMain();
+      };
+    };
+    const ta = scrim.querySelector('#d-ctext');
+    ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; });
+    scrim.querySelector('#d-cform').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const text = ta.value.trim();
+      if (!text) return;
+      const btn = ev.target.querySelector('button');
+      btn.disabled = true;
+      const { error } = await sb.from('bf_kommentare').insert({ eintrag_id: e.id, user_id: state.user.id, text });
+      btn.disabled = false;
+      if (error) return fehler(error);
+      ta.value = ''; ta.style.height = '';
+      await ladeKommentare(scrim, e);
+    });
+    await ladeKommentare(scrim, e);
+  });
+}
+
+async function ladeKommentare(scrim, e) {
+  const box = scrim.querySelector('#d-comments');
+  const { data, error } = await sb.from('bf_kommentare').select('*').eq('eintrag_id', e.id).order('created_at');
+  if (error) { box.innerHTML = '<div class="hint">Kommentare konnten nicht geladen werden.</div>'; return; }
+  e.kommentare = data.length;
+  box.innerHTML = data.length ? data.map(c => `
+    <div class="comment">
+      <div class="comment-head">${badge(c.user_id)}<span>${esc(fmtAgo(c.created_at))}${c.user_id === state.user.id ? ` <button class="del" data-cdel="${c.id}" aria-label="Kommentar löschen">✕</button>` : ''}</span></div>
+      <p>${esc(c.text)}</p>
+    </div>`).join('') : '<div class="hint">Noch keine Kommentare. Fang an!</div>';
+  box.querySelectorAll('[data-cdel]').forEach(b => b.onclick = async () => {
+    const { error } = await sb.from('bf_kommentare').delete().eq('id', b.dataset.cdel);
+    if (error) return fehler(error);
+    await ladeKommentare(scrim, e);
+  });
+  const main = document.getElementById('main');
+  if (main) { const cnt = state.eintraege.find(x => x.id === e.id); if (cnt) cnt.kommentare = e.kommentare; }
+}
+
+function openSettings() {
+  const me = person(state.user.id);
+  const andere = state.gruppen.filter(g => g.id !== state.gruppe.id);
+  openSheet(`
+    <div class="sheet-head"><h2>Einstellungen</h2><button class="close" data-close aria-label="Schließen">✕</button></div>
+    <div class="stack">
+      <div class="stack" style="gap:8px">
+        <h3>Kumpel einladen</h3>
+        <p class="hint" style="margin:0">Er registriert sich in der App und gibt diesen Code ein:</p>
+        <div class="code" id="s-code">${esc(state.gruppe.join_code || '')}</div>
+        <button class="btn ghost" id="s-copy">Code kopieren</button>
+      </div>
+      <form class="stack" id="s-gform" style="gap:8px">
+        <h3>Gruppe</h3>
+        <label>Name<input id="s-gname" maxlength="60" value="${esc(state.gruppe.name)}"></label>
+        <button class="btn ghost" type="submit">Namen speichern</button>
+      </form>
+      <form class="stack" id="s-pform" style="gap:8px">
+        <h3>Du</h3>
+        <label>Dein Name (auch in Nest sichtbar)<input id="s-pname" maxlength="60" value="${esc(me.name)}"></label>
+        <button class="btn ghost" type="submit">Namen speichern</button>
+      </form>
+      ${andere.length ? `<div class="stack" style="gap:8px"><h3>Gruppe wechseln</h3>${andere.map(g => `<button class="btn ghost" data-switch="${g.id}">${esc(g.name)}</button>`).join('')}</div>` : ''}
+      <button class="btn danger" id="s-logout">Abmelden</button>
+    </div>`, scrim => {
+    scrim.querySelector('#s-copy').onclick = async () => {
+      try { await navigator.clipboard.writeText(state.gruppe.join_code); toast('Code kopiert.'); }
+      catch { const r = document.createRange(); r.selectNodeContents(scrim.querySelector('#s-code')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Code markiert. Bitte kopieren.'); }
+    };
+    scrim.querySelector('#s-gform').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const name = scrim.querySelector('#s-gname').value.trim();
+      if (!name) return toast('Bitte gib einen Namen ein.');
+      const { error } = await sb.from('bf_gruppen').update({ name }).eq('id', state.gruppe.id);
+      if (error) return fehler(error);
+      state.gruppe.name = name; renderHero(); toast('Gespeichert.');
+    });
+    scrim.querySelector('#s-pform').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const name = scrim.querySelector('#s-pname').value.trim();
+      if (!name) return toast('Bitte gib einen Namen ein.');
+      const { data } = await sb.from('profiles').select('id').eq('id', state.user.id).maybeSingle();
+      const res = data
+        ? await sb.from('profiles').update({ display_name: name }).eq('id', state.user.id)
+        : await sb.from('profiles').insert({ id: state.user.id, display_name: name });
+      if (res.error) return fehler(res.error);
+      await ladeMitglieder(); renderHero(); renderMain(); toast('Gespeichert.');
+    });
+    scrim.querySelectorAll('[data-switch]').forEach(b => b.onclick = () => { lsSet('bf-gruppe', b.dataset.switch); closeSheet(); route(); });
+    scrim.querySelector('#s-logout').onclick = () => { closeSheet(); sb.auth.signOut(); };
+  });
+}
+
+/* ---------- Titelbild ---------- */
+async function verkleinern(file, max = 1600) {
+  if (file.type === 'image/gif') return file;
+  const bmp = await createImageBitmap(file).catch(() => null);
+  if (!bmp) return file;
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise(res => c.toBlob(b => res(b || file), 'image/jpeg', 0.85));
+}
+async function uploadHeader(ev) {
+  const file = ev.target.files?.[0];
+  ev.target.value = '';
+  if (!file) return;
+  toast('Bild wird hochgeladen …');
+  try {
+    const blob = await verkleinern(file);
+    if (blob.size > 5 * 1024 * 1024) return toast('Das Bild ist zu groß (max. 5 MB).');
+    const ext = blob.type === 'image/gif' ? 'gif' : blob.type === 'image/png' ? 'png' : 'jpg';
+    const path = `${state.gruppe.id}/header-${Date.now()}.${ext}`;
+    const up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false });
+    if (up.error) throw up.error;
+    const alt = state.gruppe.header_path;
+    const { error } = await sb.from('bf_gruppen').update({ header_path: path }).eq('id', state.gruppe.id);
+    if (error) throw error;
+    state.gruppe.header_path = path;
+    if (alt) sb.storage.from(BUCKET).remove([alt]).catch(console.error);
+    await ladeHeader(); renderHero(); toast('Neues Titelbild ist drin.');
+  } catch (e) { fehler(e); }
+}
+
+start();
+</script>
+</body>
+</html>
