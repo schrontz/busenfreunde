@@ -772,8 +772,9 @@ function openSettings() {
       </form>
       <form class="stack" id="s-pform" style="gap:8px">
         <h3>Du</h3>
-        <label>Dein Name (auch in Nest sichtbar)<input id="s-pname" maxlength="60" value="${esc(me.name)}"></label>
-        <button class="btn ghost" type="submit">Namen speichern</button>
+        <label>Dein Spitzname in dieser Gruppe<input id="s-pname" maxlength="40" value="${esc(me.name)}"></label>
+        <p class="hint" style="margin:0">Gilt nur hier. In Nest bleibt dein Name, wie er ist. Leer lassen = Nest-Name.</p>
+        <button class="btn ghost" type="submit">Spitznamen speichern</button>
       </form>
       ${andere.length ? `<div class="stack" style="gap:8px"><h3>Gruppe wechseln</h3>${andere.map(g => `<button class="btn ghost" data-switch="${g.id}">${esc(g.name)}</button>`).join('')}</div>` : ''}
       <button class="btn danger" id="s-logout">Abmelden</button>
@@ -792,14 +793,13 @@ function openSettings() {
     });
     scrim.querySelector('#s-pform').addEventListener('submit', async ev => {
       ev.preventDefault();
-      const name = scrim.querySelector('#s-pname').value.trim();
-      if (!name) return toast('Bitte gib einen Namen ein.');
-      const { data } = await sb.from('profiles').select('id').eq('id', state.user.id).maybeSingle();
-      const res = data
-        ? await sb.from('profiles').update({ display_name: name }).eq('id', state.user.id)
-        : await sb.from('profiles').insert({ id: state.user.id, display_name: name });
-      if (res.error) return fehler(res.error);
-      await ladeMitglieder(); renderHero(); renderMain(); toast('Gespeichert.');
+      const input = scrim.querySelector('#s-pname');
+      const name = input.value.trim();
+      const { error } = await sb.rpc('bf_set_spitzname', { target_gruppe_id: state.gruppe.id, name });
+      if (error) return fehler(error);
+      await ladeMitglieder(); renderHero();
+      input.value = person(state.user.id).name;
+      toast(name ? 'Spitzname gespeichert.' : 'Zurück zum Nest-Namen.');
     });
     scrim.querySelectorAll('[data-switch]').forEach(b => b.onclick = () => { lsSet('bf-gruppe', b.dataset.switch); closeSheet(); route(); });
     scrim.querySelector('#s-logout').onclick = () => { closeSheet(); sb.auth.signOut(); };
